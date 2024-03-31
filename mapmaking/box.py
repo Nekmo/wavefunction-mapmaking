@@ -2,6 +2,7 @@ import os
 from random import choice
 from typing import TYPE_CHECKING
 
+from mapmaking.direction import Direction
 from mapmaking.tiles import create_tile_list
 
 if TYPE_CHECKING:
@@ -9,14 +10,30 @@ if TYPE_CHECKING:
 
 
 class Box:
-    def __init__(self, map: "Map", x, y):
+    def __init__(self, map: "Map", x, y, possible_tiles: list = None):
         self.map = map
         self.x = x
         self.y = y
-        self.possible_tiles = create_tile_list(os.path.join("..", "tiles"))
+        if possible_tiles:
+            self.possible_tiles = possible_tiles
+        else:
+            self.possible_tiles = create_tile_list(os.path.join("..", "tiles"))
+
+    def update_possible_tiles_from_frontiers(self, up = None, down = None, left = None, right = None):
+        if up:
+            self.possible_tiles = [tile for tile in self.possible_tiles if tile.frontier_list[Direction.up.value] == up]
+        if right:
+            self.possible_tiles = [tile for tile in self.possible_tiles if tile.frontier_list[Direction.right.value] == right]
+        if down:
+            self.possible_tiles = [tile for tile in self.possible_tiles if tile.frontier_list[Direction.down.value] == down]
+        if left:
+            self.possible_tiles = [tile for tile in self.possible_tiles if tile.frontier_list[Direction.left.value] == left]
+        if not self.possible_tiles:
+            raise ValueError('No valid tiles')
+
 
     def get_boxes_around(self) -> list["Box"]:
-        return self.map.boxes_around(self.x, self.y)
+        return self.map.get_boxes_around(self.x, self.y)
 
     def get_filled_boxes_around(self) -> list["Box"]:
         return list(filter(lambda box: len(box.possible_tiles) == 1,
@@ -31,13 +48,19 @@ class Box:
         for box in boxes_around:
             box.update_possible_tiles_around()
 
+    # quitar
     def set_tile(self, tile):
         self.possible_tiles = [tile]
         self.update_possible_tiles_around()
 
+    def set_random_valid_tile(self):
+        self.possible_tiles = [choice(self.possible_tiles)]
+
+    # quitar
     def set_random_tile(self):
         self.set_tile(choice(self.possible_tiles))
 
+    # quitar
     def get_smallest_entropy_box(self, boxes: ["Box"]) -> "Box":
         for box in boxes:
             box.update_possible_tiles()
@@ -52,6 +75,7 @@ class Box:
         smallest_entropy_box.update_possible_tiles()
         smallest_entropy_box.set_random_tile()
 
+    # quitar
     def update_possible_tiles(self):
         boxes_around = self.get_filled_boxes_around()
         for box in boxes_around:

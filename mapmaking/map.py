@@ -3,6 +3,7 @@ from random import randint, choice
 from typing import Literal
 
 from mapmaking.box import Box
+from mapmaking.direction import Direction
 from mapmaking.tiles import create_tile_list
 
 
@@ -14,34 +15,71 @@ class Map(list):
         self.reset()
 
     def reset(self):
-        self[:] = [[Box(self, x, y) for y in range(self.width)] for x in range(self.height)]
+        self[:] = [[Box(self, x, y) for y in range(self.height)] for x in range(self.width)]
 
-    def boxes_around(self, x, y):
+    def get_boxes_around(self, x, y) -> list["Box"]:
         boxes = []
         if x != 0:
-            boxes.append(self[x- 1][y])
+            boxes.append(self[x - 1][y])
         if x != self.width - 1:
             boxes.append(self[x + 1][y])
         if y != 0:
-            boxes.append(self[x][y-1])
+            boxes.append(self[x][y - 1])
         if y != self.height - 1:
-            boxes.append(self[x][y+1])
-
+            boxes.append(self[x][y + 1])
         return boxes
 
-    def get_relative_position_of_given_box(self, box1: "Box", box2: "Box") -> Literal["down", "up", "left", "right"]:
+    def get_filled_boxes_around(self, x, y) -> list["Box"]:
+        return list(filter(lambda box: len(box.possible_tiles) == 1,
+                           self.get_boxes_around(x, y)))
+
+    def get_relative_position_of_given_box(self, box1: "Box", box2: "Box") -> Direction:
         if box1.x == box2.x:
             if box1.y == box2.y + 1:
-                return "down"
+                return Direction.down
             if box1.y == box2.y - 1:
-                return "up"
+                return Direction.up
         if box1.y == box2.y:
             if box1.x == box2.x + 1:
-                return "left"
+                return Direction.left
             if box1.x == box2.x - 1:
-                return "right"
-        pass
+                return Direction.right
 
     def set_random_tile(self):
-        box = self[randint(0, self.height)][randint(0, self.width)]
+        self.set_tile(randint(0, self.width), randint(0, self.height))
+
+    def set_tile(self, x: int, y: int) -> None:
+        self[x][y].set_random_valid_tile()
+
+    def create_map(self):
+        self.set_random_tile()
+        while ([box for x in range(self.width) for box in self[x] if box.entropy != 1]):
+            self.update_possible_tiles()
+            box_to_update = self.get_smallest_entropy_box()
+            self.set_tile(box_to_update.x, box_to_update.y)
+
+    def get_smallest_entropy_box(self) -> "Box":
+        boxes = [box for x in range(self.width) for box in self[x] if box.entropy != 1]
+        box_entropy_list = [box.entropy for box in boxes]
+        index_of_smallest_entropy = box_entropy_list.index(min(box_entropy_list))
+        return boxes[index_of_smallest_entropy]
+
+
+    def update_possible_tiles(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                if len(self[x][y].possible_tiles) == 1:
+                    continue
+                box = self[x][y]
+                filled_boxes = self.get_filled_boxes_around(x, y)
+                if filled_boxes:
+                    for filled_box in filled_boxes:
+                        direction = self.get_relative_position_of_given_box(box, filled_box)
+                        frontier = filled_box.possible_tiles[0].frontier_list[direction.value]
+                        box.update_possible_tiles_from_frontiers(**{direction.name: frontier})
+
+
+    # quitar
+    def create_map_legacy(self):
+        box = self[randint(0, self.width)][randint(0, self.height)]
         box.set_tile(choice(create_tile_list(os.path.join("..", "tiles"))))
