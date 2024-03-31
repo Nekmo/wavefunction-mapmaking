@@ -1,7 +1,7 @@
 from random import randint, choice
 
 from mapmaking.box import Box
-from mapmaking.tiles import POSSIBLE_TILES
+from mapmaking.tiles import TILES_LIST
 
 
 class Map(list):
@@ -23,4 +23,4 @@ class Map(list):
 
     def set_random_tile(self):
         box = self[randint(0, self.height)][randint(0, self.width)]
-        box.set_tile(choice(POSSIBLE_TILES))
+        box.set_tile(choice(TILES_LIST))

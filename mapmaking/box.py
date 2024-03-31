@@ -1,6 +1,10 @@
-from typing import Optional, Literal
+from random import choice
+from typing import TYPE_CHECKING
 
-from mapmaking.map import Map
+from mapmaking.tiles import TILES_LIST
+
+if TYPE_CHECKING:
+    from mapmaking.map import Map
 
 
 class Box:
@@ -8,7 +12,7 @@ class Box:
         self.map = map
         self.x = x
         self.y = y
-        self.possible_tiles = []
+        self.possible_tiles = TILES_LIST
 
     def get_boxes_around(self) -> list["Box"]:
         return self.map.boxes_around(self.x, self.y)
@@ -64,4 +68,13 @@ class Box:
             box.update_possible_tiles()
 
     def update_possible_tiles(self):
-        for
+        boxes_around = self.get_filled_boxes_around()
+        for box in boxes_around:
+            relative_position = self.map.get_relative_position_of_given_box(self, box)
+            other_tile = box.possible_tiles[0]
+            # TODO Esto resetea la lista de tiles posibles en vez de conservar restricciones anteriores
+            self.possible_tiles = [tile for tile in TILES_LIST if
+                                   other_tile.is_compatible_with(tile, relative_position)]
+
+    def __repr__(self):
+        return f"Box<{self.possible_tiles[0]}>"
