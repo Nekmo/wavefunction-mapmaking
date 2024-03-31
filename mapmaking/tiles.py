@@ -3,25 +3,24 @@ from os.path import isfile, join
 
 from PIL import Image
 
-TILES_DIRECTORY = "tiles"
-
 
 class Tile:
     def __init__(
-        self,
-        image_list,
-        frontier_list,
-        special = '',
-        rotable = True,
-        symmetric = False,
+            self,
+            image_list,
+            frontier_list,
+            special='',
     ):
+        # todo porque es una lista??
         self.image_list = image_list
         self.frontier_list = frontier_list
-        self.rotable = rotable
-        self.symmetric = symmetric
+        self.possible_rotations = 0 if special else rotations_needed(frontier_list)
         self.special = special
 
-    def is_compatible_with(self, other_tile, other_position = 'up'):
+
+    # todo rotatate tile
+
+    def is_compatible_with(self, other_tile, other_position='up'):
         if other_position == 'up':
             my_frontier = self.frontier_list[0]
             their_frontier = other_tile.frontier_list[2]
@@ -38,8 +37,6 @@ class Tile:
             raise ValueError(f'invalid value for other position: {other_position}')
         return my_frontier == their_frontier[::-1]
 
-    def __repr__(self):
-        return f"Tile<{self.frontier_list}>"
 
 def frontiers_from_name(fname):
     fname = fname.partition('.')[0]
@@ -62,34 +59,24 @@ def rotate_frontier_list(old_frontier_list):
     return new_frontier_list
 
 
-def is_simmetric(frontier_list):
-    base_string = '-'.join(frontier_list)
-    inverse_list = [_f[::-1] for _f in frontier_list[::-1]]
-    #print(base_string)
-    for ii in range(4):
-        inverse_string = '-'.join(inverse_list)
-        #print(inverse_string)
-        if inverse_string == base_string:
-            return True
-        inverse_list = rotate_frontier_list(inverse_list)
-    return False
+def rotations_needed(frontier_list):
+    if len(set(frontier_list)) == 1:
+        return 0
+    if frontier_list[0] == frontier_list[2] and frontier_list[1] == frontier_list[3]:
+        return 1
+    return 3
 
 
 def tile_from_file(fname, pathname):
     frontiers, special = frontiers_from_name(fname)
     fpath = join(pathname, fname)
+    # with Image.open(fpath) as im:
     im = Image.open(fpath)
-    if special == '':
-        rotable = True
-    else:
-        rotable = False
 
     newtile = Tile(
-        image_list = [im,],
-        frontier_list = frontiers,
-        special = special,
-        rotable = rotable,
-        symmetric = False,
+        image_list=[im, ],
+        frontier_list=frontiers,
+        special=special,
     )
     return newtile
 
@@ -97,31 +84,13 @@ def tile_from_file(fname, pathname):
 def rotate_tile(oldtile):
     old_im_list = oldtile.image_list
     old_frontier_list = oldtile.frontier_list
+    # old_im_list[0] = old_im_list[0].open()
     new_im_list = [_im.rotate(-90) for _im in old_im_list]
     new_frontier_list = [old_frontier_list[-1]] + [_front for _front in old_frontier_list[:-1]]
     newtile = Tile(
         new_im_list,
         new_frontier_list,
-        special = oldtile.special,
-        rotable = oldtile.rotable,
-        symmetric = oldtile.symmetric,
-    )
-    return newtile
-
-
-def flip_tile(oldtile):
-    old_im_list = oldtile.image_list
-    old_frontier_list = oldtile.frontier_list
-    new_im_list = [_im.transpose(Image.Transpose.FLIP_LEFT_RIGHT) for _im in old_im_list]
-    new_frontier_list = [_front[::-1] for _front in old_frontier_list]
-    new_frontier_list[1] = old_frontier_list[3][::-1]
-    new_frontier_list[3] = old_frontier_list[1][::-1]
-    newtile = Tile(
-        new_im_list,
-        new_frontier_list,
-        special = oldtile.special,
-        rotable = oldtile.rotable,
-        symmetric = oldtile.symmetric,
+        special=oldtile.special,
     )
     return newtile
 
@@ -132,18 +101,8 @@ def create_tile_list(pathname):
     for file in file_list:
         new_tile = tile_from_file(file, pathname)
         tile_list.append(new_tile)
-        if new_tile.rotable == True:
-            for ii in range(3):
-                new_tile = rotate_tile(new_tile)
-                tile_list.append(new_tile)
-        if not is_simmetric(new_tile.frontier_list):
-            new_tile = flip_tile(new_tile)
+        for rotation in range(new_tile.possible_rotations):
+            new_tile = rotate_tile(new_tile)
             tile_list.append(new_tile)
-            if new_tile.rotable == True:
-                for ii in range(3):
-                    new_tile = rotate_tile(new_tile)
-                    tile_list.append(new_tile)
+
     return tile_list
-
-
-TILES_LIST = create_tile_list(TILES_DIRECTORY)

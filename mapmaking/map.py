@@ -1,8 +1,9 @@
+import os
 from random import randint, choice
 from typing import Literal
 
 from mapmaking.box import Box
-from mapmaking.tiles import TILES_LIST
+from mapmaking.tiles import create_tile_list
 
 
 class Map(list):
@@ -43,4 +44,4 @@ class Map(list):
 
     def set_random_tile(self):
         box = self[randint(0, self.height)][randint(0, self.width)]
-        box.set_tile(choice(TILES_LIST))
+        box.set_tile(choice(create_tile_list(os.path.join("..", "tiles"))))
