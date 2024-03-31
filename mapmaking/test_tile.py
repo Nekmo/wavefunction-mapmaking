@@ -3,8 +3,8 @@ import unittest
 
 from PIL.Image import Image
 
-from mapmaking.tiles import Tile, frontiers_from_name, rotate_frontier_list, is_simmetric, rotations_needed, \
-    tile_from_file, rotate_tile, create_tile_list
+from mapmaking.tiles import Tile, frontiers_from_name, rotate_frontier_list, rotations_needed, \
+    tile_from_file, rotate_tile
 
 
 class TileTests(unittest.TestCase):
@@ -41,7 +41,6 @@ class TileTests(unittest.TestCase):
         assert rotations_needed(["a", "t", "a", "t"]) == 1
         assert rotations_needed(["t", "a", "t", "t"]) == 3
 
-
     def test_tile_from_file(self):
         tile = tile_from_file("a-a-a-a.jpg", self.tile_path)
         assert isinstance(tile, Tile)
@@ -56,11 +55,17 @@ class TileTests(unittest.TestCase):
         tile = tile_from_file("t-a-a-a.jpg", self.tile_path)
         rotated_tile = rotate_tile(tile)
 
-        # esta bien?
-        assert rotated_tile.image_list[0] != tile.image_list[0]
-        # assert rotated_tile.image_list[0].rotate(-90) == tile.image_list[0]
+        assert rotated_tile.frontier_list == ["a", "t", "a", "a"]
 
-    # def test_tile(self):
-    #     im = Image.open('')
-    #     frontiers, special = frontiers_from_name("")
-    #     tile = Tile(im, frontiers, special)
+    def test_tile_is_compatible_with(self):
+        tile1 = Tile(None, *frontiers_from_name("a-t-ta-t.jpg"))
+
+        assert not tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-ta-at.jpg")), "up")
+        assert not tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-ta-at.jpg")), "right")
+        assert not tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-ta-at.jpg")), "down")
+        assert not tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-ta-at.jpg")), "left")
+
+        assert tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-a-at.jpg")), "up")
+        assert tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-at-ta-t.jpg")), "right")
+        assert tile1.is_compatible_with(Tile(None, *frontiers_from_name("ta-at-ta-at.jpg")), "down")
+        assert tile1.is_compatible_with(Tile(None, *frontiers_from_name("a-t-ta-at.jpg")), "left")

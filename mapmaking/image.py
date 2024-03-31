@@ -8,7 +8,7 @@ def generate_final_image(map: list[list], width: int, height: int):
     for x, box_row in enumerate(map):
         for y, box in enumerate(box_row):
             tile = box.possible_tiles[0]
-            image = choice(tile.image_list)
+            image = tile.image
             final_image.paste(image, (y * 64, x * 64))
 
     final_image.save('final_image.png', 'JPEG')

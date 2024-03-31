@@ -7,36 +7,27 @@ from PIL import Image
 class Tile:
     def __init__(
             self,
-            image_list,
+            image,
             frontier_list,
             special='',
     ):
-        # todo porque es una lista??
-        self.image_list = image_list
+        self.image = image
         self.frontier_list = frontier_list
-        self.possible_rotations = 0 if special else rotations_needed(frontier_list)
         self.special = special
+        self.possible_rotations = 0 if special else rotations_needed(frontier_list)
 
-
-    # todo rotatate tile
 
     def is_compatible_with(self, other_tile, other_position='up'):
         if other_position == 'up':
-            my_frontier = self.frontier_list[0]
-            their_frontier = other_tile.frontier_list[2]
+            return self.frontier_list[0] == other_tile.frontier_list[2]
         elif other_position == 'down':
-            my_frontier = self.frontier_list[2]
-            their_frontier = other_tile.frontier_list[0]
+            return self.frontier_list[2] == other_tile.frontier_list[0]
         elif other_position == 'right':
-            my_frontier = self.frontier_list[1]
-            their_frontier = other_tile.frontier_list[3]
+            return self.frontier_list[1] == other_tile.frontier_list[3]
         elif other_position == 'left':
-            my_frontier = self.frontier_list[3]
-            their_frontier = other_tile.frontier_list[1]
+            return self.frontier_list[3] == other_tile.frontier_list[1]
         else:
             raise ValueError(f'invalid value for other position: {other_position}')
-        return my_frontier == their_frontier[::-1]
-
 
 def frontiers_from_name(fname):
     fname = fname.partition('.')[0]
@@ -70,11 +61,10 @@ def rotations_needed(frontier_list):
 def tile_from_file(fname, pathname):
     frontiers, special = frontiers_from_name(fname)
     fpath = join(pathname, fname)
-    # with Image.open(fpath) as im:
     im = Image.open(fpath)
 
     newtile = Tile(
-        image_list=[im, ],
+        image=im,
         frontier_list=frontiers,
         special=special,
     )
@@ -82,19 +72,16 @@ def tile_from_file(fname, pathname):
 
 
 def rotate_tile(oldtile):
-    old_im_list = oldtile.image_list
     old_frontier_list = oldtile.frontier_list
-    # old_im_list[0] = old_im_list[0].open()
-    new_im_list = [_im.rotate(-90) for _im in old_im_list]
+    new_im = oldtile.image.rotate(-90)
     new_frontier_list = [old_frontier_list[-1]] + [_front for _front in old_frontier_list[:-1]]
-    newtile = Tile(
-        new_im_list,
+    return Tile(
+        new_im,
         new_frontier_list,
         special=oldtile.special,
     )
-    return newtile
 
-
+# poner el directorio en tiles para no generarlo cada vez
 def create_tile_list(pathname):
     file_list = [f for f in listdir(pathname) if isfile(join(pathname, f))]
     tile_list = []
