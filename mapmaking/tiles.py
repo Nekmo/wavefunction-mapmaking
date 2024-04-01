@@ -86,6 +86,10 @@ def create_tile_list(pathname):
     file_list = [f for f in listdir(pathname) if isfile(join(pathname, f))]
     tile_list = []
     for file in file_list:
+        # temp
+        if 'at' in file or 'ta' in file:
+            continue
+
         new_tile = tile_from_file(file, pathname)
         tile_list.append(new_tile)
         for rotation in range(new_tile.possible_rotations):
