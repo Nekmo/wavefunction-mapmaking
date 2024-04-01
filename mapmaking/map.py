@@ -75,14 +75,18 @@ class Map(list):
                 if filled_boxes:
                     for filled_box in filled_boxes:
                         direction = self.get_relative_position_of_given_box(box, filled_box)
-                        if direction.value == 0:
-                            relative_direction = 2
-                        elif direction.value == 1:
-                            relative_direction = 3
-                        elif direction.value == 2:
-                            relative_direction = 0
-                        elif direction.value == 3:
-                            relative_direction = 1
+                        relative_direction = self.get_opposite_direction(direction)
 
-                        frontier = filled_box.possible_tiles[0].frontier_list[relative_direction]
+                        frontier = filled_box.possible_tiles[0].frontier_list[relative_direction.value]
                         box.update_possible_tiles_from_frontiers(**{direction.name: frontier})
+
+    def get_opposite_direction(self, direction):
+        if direction == Direction.up:
+            relative_direction = Direction.down
+        elif direction == Direction.right:
+            relative_direction = Direction.left
+        elif direction == Direction.down:
+            relative_direction = Direction.up
+        elif direction == Direction.left:
+            relative_direction = Direction.right
+        return relative_direction
